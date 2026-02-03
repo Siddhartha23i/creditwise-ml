@@ -4,7 +4,7 @@ Transform your blog articles into viral social media posts with AI! Generate eng
 
 ## 🌐 Live Demo
 
-[Try Postify here!](https://your-app-url.streamlit.app) *(Update this after deployment)*
+[Try Postify here!](https://postify23.streamlit.app/) 
 
 ## Features ✨
 
