@@ -3,6 +3,7 @@ __pycache__/
 .venv/
 .venv*
 .ipynb_checkpoints/
-creditwise_model.joblib
+creditwise_selected_model.joblib
+model_metrics.json
 predictions.csv
 .streamlit/secrets.toml

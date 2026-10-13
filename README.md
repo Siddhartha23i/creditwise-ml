@@ -20,16 +20,21 @@ The project uses a synthetic loan approval dataset with fields including:
 - loan amount, loan term, purpose, property area, and employer category
 - target column: `Loan_Approved` (`Yes` / `No`)
 
-## Model
+## Models and evaluation
 
-The model uses a preprocessing pipeline that handles:
+The project compares these three permitted classification algorithms on the same reproducible 80/20 stratified hold-out test set:
 
-- median imputation for numeric features
-- most-frequent imputation for categorical features
-- one-hot encoding for categorical fields
-- random forest classification for the final prediction
+- Logistic Regression
+- K-Nearest Neighbors (KNN)
+- Gaussian Naive Bayes
 
-This strategy works well on the provided dataset and produces strong validation performance.
+All three models use the same leakage-safe preprocessing pipeline:
+
+- median imputation and standardization for numeric features
+- most-frequent imputation and one-hot encoding for categorical features
+- preprocessing fitted only on the training split
+
+`train_model.py` records accuracy, precision, recall, F1-score, confusion matrix, and ROC AUC for every model in `model_metrics.json`. The application model is selected using the highest ROC AUC because the UI displays predicted probabilities; F1-score and accuracy are deterministic tie-breakers. If the scores are tied, Logistic Regression is used as the first-listed baseline.
 
 ## Repository structure
 
@@ -38,7 +43,8 @@ creditwise-ml/
 ├── app.py                     # Streamlit app
 ├── train_model.py            # Model training and prediction export
 ├── loan_approval_data.csv    # Loan approval dataset
-├── creditwise_model.joblib   # Trained pipeline (created at runtime)
+├── creditwise_selected_model.joblib # Selected permitted pipeline (created at runtime)
+├── model_metrics.json        # Comparison metrics (created at runtime)
 ├── requirements.txt          # Python dependencies
 ├── .gitignore                # Ignore generated files
 ├── .streamlit/
@@ -69,7 +75,9 @@ The Streamlit app supports two prediction modes:
 
 - Single applicant review: enter demographic and financial data from a form and get a probability-based approval decision
 - CSV batch upload: upload a file with the same applicant columns and receive a decision for each record
-- Feature-importance chart: inspect the top variables driving the model for a single prediction
+- Model-signal chart: inspect compatible model coefficients or class-mean separation for a single prediction
+
+The output is an educational estimate and must not be treated as a real financial lending decision.
 
 ## Train the model manually
 
@@ -82,8 +90,10 @@ This script:
 1. loads the loan dataset
 2. drops records without a label from training
 3. trains the pipeline
-4. saves the trained model to `creditwise_model.joblib`
-5. writes predicted approval scores for unlabeled records to `predictions.csv`
+4. compares the three permitted models and selects the deployment model using the documented ROC AUC criterion
+5. saves the selected model to `creditwise_selected_model.joblib`
+6. saves the comparison metrics to `model_metrics.json`
+7. writes predicted approval scores for unlabeled records to `predictions.csv`
 
 ## Example prediction output
 

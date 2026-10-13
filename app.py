@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import joblib
@@ -9,7 +10,8 @@ import streamlit as st
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_PATH = BASE_DIR / "loan_approval_data.csv"
-MODEL_PATH = BASE_DIR / "creditwise_model.joblib"
+MODEL_PATH = BASE_DIR / "creditwise_selected_model.joblib"
+METRICS_PATH = BASE_DIR / "model_metrics.json"
 FEATURE_ORDER = [
     "Applicant_Income",
     "Coapplicant_Income",
@@ -53,17 +55,21 @@ def make_prediction_row(values: dict) -> pd.DataFrame:
     return pd.DataFrame([row])
 
 
-def get_feature_importance(model):
+def get_feature_explanation(model):
     preprocessor = model.named_steps["preprocessor"]
     classifier = model.named_steps["classifier"]
     transformed_names = preprocessor.get_feature_names_out().tolist()
-    importance_df = pd.DataFrame(
-        {
-            "feature": transformed_names,
-            "importance": classifier.feature_importances_,
-        }
-    ).sort_values("importance", ascending=False)
-    return importance_df.head(10)
+    if hasattr(classifier, "coef_"):
+        values = np.abs(classifier.coef_[0])
+        label = "absolute coefficient"
+    elif hasattr(classifier, "theta_"):
+        values = np.abs(classifier.theta_[1] - classifier.theta_[0])
+        label = "class mean separation"
+    else:
+        return None, None
+
+    explanation = pd.DataFrame({"feature": transformed_names, "value": values})
+    return explanation.sort_values("value", ascending=False).head(10), label
 
 
 def predict_frame(model, frame: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
@@ -149,9 +155,11 @@ def render_single_prediction(model) -> None:
         else:
             st.info("The application is near the decision threshold and should be reviewed manually.")
 
-        importance_df = get_feature_importance(model)
-        st.subheader("Top drivers of the prediction")
-        st.bar_chart(importance_df.set_index("feature")["importance"]) 
+        explanation_df, explanation_label = get_feature_explanation(model)
+        if explanation_df is not None:
+            st.subheader("Top model signals")
+            st.caption(f"Shown using {explanation_label}; this is not a causal explanation.")
+            st.bar_chart(explanation_df.set_index("feature")["value"])
 
 
 def render_batch_prediction(model) -> None:
@@ -204,8 +212,14 @@ def main() -> None:
         mode = st.radio("Choose one", ["Single applicant", "CSV upload"], index=0)
 
     st.subheader("Loan approval model")
+    if METRICS_PATH.exists():
+        metadata = json.loads(METRICS_PATH.read_text(encoding="utf-8"))
+        selected_model = metadata.get("selected_model", "selected permitted classifier")
+    else:
+        selected_model = "selected permitted classifier"
     st.write(
-        "This app uses a random forest classifier trained on historical loan applications to estimate the probability of approval."
+        f"This app uses {selected_model} trained on historical loan applications to estimate approval probability. "
+        "This is an educational prediction, not a real lending decision."
     )
 
     model = load_or_train_model()
