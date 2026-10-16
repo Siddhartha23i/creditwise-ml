@@ -1,6 +1,6 @@
 # CreditWise ML
 
-CreditWise ML is a small end-to-end loan approval prediction project built on the provided `loan_approval_data.csv` dataset. It trains a machine learning model to estimate whether a loan is likely to be approved and exposes that prediction in a Streamlit app.
+CreditWise ML is a small end-to-end loan approval prediction project built on the `loan_approval_data.csv` dataset. It trains a machine learning model to estimate whether a loan is likely to be approved and exposes that prediction in a Streamlit app.
 
 ## Project goals
 
