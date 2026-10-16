@@ -6,6 +6,10 @@ CreditWise ML is a small end-to-end loan approval prediction project built on th
 
 Try the deployed Streamlit app: [creditwise-ml.streamlit.app](https://creditwise-ml.streamlit.app/)
 
+## Live demo
+
+Try the deployed Streamlit app: [creditwise-ml.streamlit.app](https://creditwise-ml.streamlit.app/)
+
 ## Project goals
 
 - Clean and prepare a real-world loan dataset
